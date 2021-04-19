@@ -5,7 +5,7 @@ from typing import *
 import logging
 
 logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-
+RANGE = 5
 
 class AI:
 
@@ -18,7 +18,7 @@ class AI:
         self.direction: int = None
         self.value: int = None
 
-    def get_manhatani_destination(self, x_mabda, y_mabda, x_maghsad, y_maghsad):
+    def get_manhatani_distance(self, x_mabda, y_mabda, x_maghsad, y_maghsad):
         return abs(x_mabda - x_maghsad) + abs(y_mabda - y_maghsad)
 
     def find_resource(self):
@@ -28,8 +28,8 @@ class AI:
         best_message = 0
         x_message = 0
         y_message = 0
-        for i in range(-5, 6):
-            for j in range(-5, 6):
+        for i in range(-1 * RANGE, RANGE + 1): # inja range e yaro e
+            for j in range(-1 * RANGE, RANGE + 1):
                 if abs(i) + abs(j) > self.game.ant.viewDistance:
                     continue
                 if self.game.ant.getNeightbourCell(i, j).resource_value > 0:
@@ -39,7 +39,7 @@ class AI:
                         y_destination = j
                     value = (
                         self.game.ant.getNeightbourCell(i, j).resource_value + 100 -
-                        self.get_manhatani_destination(
+                        self.get_manhatani_distance(
                             self.game.ant.currentX + i, self.game.ant.currentY + j, self.game.baseX, self.game.baseY
                         ))
                     if value > best_message:
@@ -59,7 +59,7 @@ class AI:
                 if self.game.ant.getNeightbourCell(i, j).resource_value > 0:
                     value = (
                             self.game.ant.getNeightbourCell(i, j).resource_value + 100 -
-                            self.get_manhatani_destination(
+                            self.get_manhatani_distance(
                                 self.game.ant.currentX + i, self.game.ant.currentY + j, self.game.baseX, self.game.baseY
                             ))
                     if value > best_message:
@@ -125,28 +125,32 @@ class AI:
 
             up_cell = (cell[0], cell[1] - 1)
             if up_cell not in visited_cells and (
-                    (self.get_manhatani_destination(position[0], position[1], up_cell[0], up_cell[1])) or (self.game.ant.getNeightbourCell(up_cell[0] - position[0], up_cell[1] - position[1]).type != 2)
+                    (self.get_manhatani_distance(position[0], position[1], up_cell[0], up_cell[1]) > self.game.ant.viewDistance) or
+                    (self.game.ant.getNeightbourCell(up_cell[0] - position[0], up_cell[1] - position[1]).type != 2)
             ):
                 cells.append(up_cell)
                 moves_list.append(moves + [Direction.UP.value])
 
             down_cell = (cell[0], cell[1] + 1)
             if down_cell not in visited_cells and (
-                    (self.get_manhatani_destination(position[0], position[1], down_cell[0], down_cell[1])) or (self.game.ant.getNeightbourCell(down_cell[0] - position[0], down_cell[1] - position[1]).type != 2)
+                    (self.get_manhatani_distance(position[0], position[1], down_cell[0], down_cell[1]) > self.game.ant.viewDistance) or
+                    (self.game.ant.getNeightbourCell(down_cell[0] - position[0], down_cell[1] - position[1]).type != 2)
             ):
                 cells.append(down_cell)
                 moves_list.append(moves + [Direction.DOWN.value])
 
             right_cell = (cell[0] + 1, cell[1])
             if right_cell not in visited_cells and (
-                    (self.get_manhatani_destination(position[0], position[1], right_cell[0], right_cell[1])) or (self.game.ant.getNeightbourCell(right_cell[0] - position[0], right_cell[1] - position[1]).type != 2)
+                    (self.get_manhatani_distance(position[0], position[1], right_cell[0], right_cell[1]) > self.game.ant.viewDistance) or
+                    (self.game.ant.getNeightbourCell(right_cell[0] - position[0], right_cell[1] - position[1]).type != 2)
             ):
                 cells.append(right_cell)
                 moves_list.append(moves + [Direction.RIGHT.value])
 
             left_cell = (cell[0] - 1, cell[1])
             if left_cell not in visited_cells and (
-                    (self.get_manhatani_destination(position[0], position[1], left_cell[0], left_cell[1])) or (self.game.ant.getNeightbourCell(left_cell[0] - position[0], left_cell[1] - position[1]).type != 2)
+                    (self.get_manhatani_distance(position[0], position[1], left_cell[0], left_cell[1]) > self.game.ant.viewDistance) or
+                    (self.game.ant.getNeightbourCell(left_cell[0] - position[0], left_cell[1] - position[1]).type != 2)
             ):
                 cells.append(left_cell)
                 moves_list.append(moves + [Direction.LEFT.value])
@@ -165,8 +169,8 @@ class AI:
                 else:
                     chat_box = self.game.chatBox
                     destination = chat_box.allChats[-1].text.split(',')
-                    x = destination[0]
-                    y = destination[1]
+                    x = int(destination[0])
+                    y = int(destination[1])
                     if x and y:
                         self.direction = self.get_next_step(position=(self.game.ant.currentX, self.game.ant.currentY), goal=(x, y))
                     else:
@@ -177,5 +181,9 @@ class AI:
                 self.value = value
         else:
             self.direction = random.choice(list(Direction)).value
+            x_message, y_message, value = self.find_resource_for_others()
+            if value != 0:
+                self.message = str(x_message) + ',' + str(y_message)
+                self.value = value
         logging.warning(self.direction)
         return self.message, self.value, self.direction
