@@ -180,8 +180,20 @@ class AI:
                 self.message = str(x_message) + ',' + str(y_message)
                 self.value = value
         else:
-            self.direction = random.choice(list(Direction)).value
-            x_message, y_message, value = self.find_resource_for_others()
+            x, y, destination, x_message, y_message, value = self.find_resource()
+            if destination < 6:
+                self.direction = self.get_next_step(position=(self.game.ant.currentX, self.game.ant.currentY),
+                                                    goal=(self.game.ant.currentX + x, self.game.ant.currentY + y))
+            else:
+                chat_box = self.game.chatBox
+                destination = chat_box.allChats[-1].text.split(',')
+                x = int(destination[0])
+                y = int(destination[1])
+                if x and y:
+                    self.direction = self.get_next_step(position=(self.game.ant.currentX, self.game.ant.currentY),
+                                                        goal=(x, y))
+                else:
+                    self.direction = random.choice(list(Direction)).value
             if value != 0:
                 self.message = str(x_message) + ',' + str(y_message)
                 self.value = value
