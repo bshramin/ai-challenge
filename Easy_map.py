@@ -12,7 +12,9 @@ def y(ez_cell):
 
 class EasyMap():
     def __init__(self):
-        self.game = None
+        self.game: Game = None
+
+        self.local_view = set()
         self.walls = set()
         self.bread = dict()
         self.grass = dict()
@@ -27,10 +29,12 @@ class EasyMap():
         for i in range(-1 * game.viewDistance, game.viewDistance + 1):
             for j in range(-1 * game.viewDistance, game.viewDistance + 1):
                 cell = game.ant.getNeightbourCell(i, j)
-                if cell in None:
+                if cell is None:
                     continue
 
                 easy_cell = (cell.x, cell.y)
+                self.local_view.add(easy_cell)
+
                 if cell.type == CellType.WALL.value:
                     self.walls.add(easy_cell)
                 elif cell.resource_value > 0:
@@ -38,8 +42,11 @@ class EasyMap():
                         self.bread[easy_cell] = cell.resource_value
                     else:
                         self.grass[easy_cell] = cell.resource_value
+                else:
+                    self.bread.pop(cell, None)
+                    self.grass.pop(cell, None)
 
-    def get_easy_neigbor(self, source_cell, dx, dy):
+    def get_easy_neighbor(self, source_cell, dx, dy):
         cell_x = (x(source_cell) + dx) % self.game.mapWidth
         cell_y = (y(source_cell) + dy) % self.game.mapHeight
         return (cell_x, cell_y)
@@ -68,10 +75,10 @@ class EasyMap():
                     return None
 
             dir_to_cell = {
-                Direction.UP.value: self.get_easy_neigbor(cell, 0, -1),
-                Direction.DOWN.value: self.get_easy_neigbor(cell, 0, 1),
-                Direction.RIGHT.value: self.get_easy_neigbor(cell, 1, 0),
-                Direction.LEFT.value: self.get_easy_neigbor(cell, -1, 0),
+                Direction.UP.value: self.get_easy_neighbor(cell, 0, -1),
+                Direction.DOWN.value: self.get_easy_neighbor(cell, 0, 1),
+                Direction.RIGHT.value: self.get_easy_neighbor(cell, 1, 0),
+                Direction.LEFT.value: self.get_easy_neighbor(cell, -1, 0),
             }
 
             for cdir, cell in dir_to_cell.items():
@@ -79,3 +86,19 @@ class EasyMap():
                     visited.append(cell)
                     queue.append(cell)
                     moves_list.append(moves + [cdir])
+
+    def find_best_resource(self, source_cell):
+        my_base = (self.game.baseX, self.game.baseY)
+        best_val = 0
+        best_pos = None
+        for res_pos, res_val in {**self.bread, **self.grass}:
+            if res_pos not in self.local_view:  # temp: hame naran roo ye chix
+                continue
+            val = res_val + 100 - self.get_distance(res_pos, my_base)
+            if val > best_val:
+                best_val = val
+                best_pos = res_pos
+        return best_pos
+
+    def find_best_attack_pos(self, source_cell):
+        return self.find_best_resource(source_cell)
