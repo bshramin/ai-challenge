@@ -50,13 +50,14 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         best_val = 0  # TODO: add priorities and calc best_val in proirity
         best_message = None
-        for res_cell, res_val in {**AI.easy_map.bread, **AI.easy_map.grass}.items():
+        local_resources = {**AI.easy_map.bread, **AI.easy_map.grass}
+        for res_cell, res_val in local_resources.items():
             if res_cell not in AI.easy_map.local_view:  # TODO: improve
                 continue
             val = res_val + 100 - AI.easy_map.get_distance(res_cell, my_base)
             if val > best_val:  # TODO:check id already is in chatbox
                 best_val = val
-                best_message = str(x(res_cell)) + ',' + str(y(res_cell))
+                best_message = f"{x(res_cell)},{y(res_cell)},{res_val}"
         return best_message, best_val
 
     def kargar_decide(self, me):
@@ -64,13 +65,13 @@ class AI:
         my_pos = (me.currentX, me.currentY)
         my_base = (self.game.baseX, self.game.baseY)
 
-        if resource.value > 0: #TODO: age ja dasht bazam bardare
+        if resource.value > 0:  # TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)
         else:
             res_pos = AI.easy_map.find_best_resource(my_pos)
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
             if self.direction is None:
-                self.direction = random.choice(list(Direction)).value
+                self.direction = random.choice(list(Direction)[1:]).value
 
         message, value = self.send_message()
         if value != 0:
