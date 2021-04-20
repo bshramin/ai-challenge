@@ -23,8 +23,7 @@ class EasyMap():
     def get_distance(source_cell, dest_cell):
         return abs(x(source_cell) - x(dest_cell)) + abs(y(source_cell) - y(dest_cell))
 
-    def update(self, game: Game):
-        # update all sets with my vision and messages from teammates
+    def update(self, game: Game):  # TODO: update from messages too
         self.game = game
         for i in range(-1 * game.viewDistance, game.viewDistance + 1):
             for j in range(-1 * game.viewDistance, game.viewDistance + 1):
@@ -88,17 +87,16 @@ class EasyMap():
                     moves_list.append(moves + [cdir])
 
     def find_best_resource(self, source_cell):
-        my_base = (self.game.baseX, self.game.baseY)
-        best_val = 0
-        best_pos = None
-        for res_pos, res_val in {**self.bread, **self.grass}:
-            if res_pos not in self.local_view:  # temp: hame naran roo ye chix
-                continue
-            val = res_val + 100 - self.get_distance(res_pos, my_base)
-            if val > best_val:
-                best_val = val
-                best_pos = res_pos
-        return best_pos
+        min_dist = self.game.ant.viewDistance + 2  # TODO: maybe check outside of local too
+        best_cell = None
+        print({**self.bread, **self.grass})
+        for res_cell, res_val in {**self.bread, **self.grass}.items():  # TODO: decide res_type
+            # TODO: check res_value too
+            dist = self.get_distance(source_cell, res_cell)
+            if dist < min_dist:
+                min_dist = dist
+                best_cell = res_cell
+        return best_cell
 
-    def find_best_attack_pos(self, source_cell):
+    def find_best_attack_pos(self, source_cell):  # TODO: check enemies
         return self.find_best_resource(source_cell)

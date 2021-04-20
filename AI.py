@@ -4,7 +4,7 @@ import random
 import time
 from typing import *
 
-from Easy_map import EasyMap
+from Easy_map import *
 from Model import *
 
 logging.basicConfig(filename=f'logs/instance{time.time()}.log',
@@ -28,10 +28,11 @@ class AI:
         self.value: int = None
 
     def print_all_map(self):
-        for cells in self.game.ant.visibleMap.cells:
-            if cells is None:
-                return
-            for cell in cells:
+        for j in range(self.game.mapHeight):
+            for i in range(self.game.mapWidth):
+                if self.game.ant.visibleMap.cells[i] is None:
+                    return
+                cell = self.game.ant.visibleMap.cells[i][j]
                 if cell:
                     print(f"({cell.x},{cell.y})", end='')
                 else:
@@ -39,16 +40,17 @@ class AI:
             print()
 
     def send_message(self):
-        # value = (
-        #     self.game.ant.getNeightbourCell(i, j).resource_value + 100 -
-        #     self.get_manhatani_distance(
-        #         self.game.ant.currentX + i, self.game.ant.currentY +
-        #         j, self.game.baseX, self.game.baseY
-        #     ))
-        # if value > best_message:
-        #     best_message = value
-        # str(x_message) + ',' + str(y_message)
-        return 0, 0
+        my_base = (self.game.baseX, self.game.baseY)
+        best_val = 0  # TODO: add priorities and calc best_val in proirity
+        best_message = None
+        for res_cell, res_val in {**AI.easy_map.bread, **AI.easy_map.grass}.items():
+            if res_cell not in AI.easy_map.local_view:  # TODO: improve
+                continue
+            val = res_val + 100 - AI.easy_map.get_distance(res_cell, my_base)
+            if val > best_val:  # TODO:check id already is in chatbox
+                best_val = val
+                best_message = str(x(res_cell)) + ',' + str(y(res_cell))
+        return best_message, best_val
 
     def kargar_decide(self, me):
         resource = me.currentResource
@@ -84,11 +86,14 @@ class AI:
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)
-        # self.print_all_map()
+        self.print_all_map()
+
+        print("walls: ", AI.easy_map.walls)
+        print("breads: ", AI.easy_map.bread)
+        print("garss: ", AI.easy_map.grass)
 
         me = self.game.ant
         ant_type = me.antType
-
         if ant_type == AntType.KARGAR.value:
             self.kargar_decide(me)
         else:
@@ -96,4 +101,5 @@ class AI:
 
         print("decide:", self.direction, "- message: ",
               self.message, "- value: ", self.value)
+        print()
         return self.message, self.value, self.direction
