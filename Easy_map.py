@@ -89,7 +89,6 @@ class EasyMap():
     def find_best_resource(self, source_cell):
         min_dist = self.game.ant.viewDistance + 2  # TODO: maybe check outside of local too
         best_cell = None
-        print({**self.bread, **self.grass})
         for res_cell, res_val in {**self.bread, **self.grass}.items():  # TODO: decide res_type
             # TODO: check res_value too
             dist = self.get_distance(source_cell, res_cell)

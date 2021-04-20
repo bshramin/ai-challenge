@@ -7,7 +7,7 @@ from typing import *
 from Easy_map import *
 from Model import *
 
-logging.basicConfig(filename=f'logs/instance{time.time()}.log',
+logging.basicConfig(filename=f'logs/ant{time.time()}.log',
                     filemode='w',
                     format='%(message)s',
                     level=logging.DEBUG)
@@ -16,11 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 class AI:
+    turn_num = 0
     easy_map = EasyMap()
 
     def __init__(self):
         # Current Game State
         self.game: Game = None
+        AI.turn_num += 1
 
         # Answer
         self.message: str = None
@@ -29,15 +31,16 @@ class AI:
 
     def print_all_map(self):
         for j in range(self.game.mapHeight):
+            line = ""
             for i in range(self.game.mapWidth):
                 if self.game.ant.visibleMap.cells[i] is None:
                     return
                 cell = self.game.ant.visibleMap.cells[i][j]
                 if cell:
-                    print(f"({cell.x},{cell.y})", end='')
+                    line = line + f"({cell.x},{cell.y})"
                 else:
-                    print("(   )", end='')
-            print()
+                    line = line + "(   )"
+            logger.info(line)
 
     def send_message(self):
         my_base = (self.game.baseX, self.game.baseY)
@@ -88,18 +91,22 @@ class AI:
         AI.easy_map.update(self.game)
         self.print_all_map()
 
-        print("walls: ", AI.easy_map.walls)
-        print("breads: ", AI.easy_map.bread)
-        print("garss: ", AI.easy_map.grass)
-
         me = self.game.ant
         ant_type = me.antType
+
+        logger.info(f"Turn: {AI.turn_num}")
+        logger.info(f"my pos: {(me.currentX, me.currentY)}")
+        logger.info(f"walls: {AI.easy_map.walls}")
+        logger.info(f"breads: {AI.easy_map.bread}")
+        logger.info(f"garss: {AI.easy_map.grass}")
+
         if ant_type == AntType.KARGAR.value:
             self.kargar_decide(me)
         else:
             self.sarbaz_decide(me)
 
-        print("decide:", self.direction, "- message: ",
-              self.message, "- value: ", self.value)
-        print()
+        logger.info(
+            f"decide: { self.direction} - message: {self.message} - value: { self.value}")
+        logger.info("")
+        logger.info("")
         return self.message, self.value, self.direction
