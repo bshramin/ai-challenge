@@ -42,8 +42,8 @@ class EasyMap():
                     else:
                         self.grass[easy_cell] = cell.resource_value
                 else:
-                    self.bread.pop(cell, None)
-                    self.grass.pop(cell, None)
+                    self.bread.pop(easy_cell, None)
+                    self.grass.pop(easy_cell, None)
 
     def get_easy_neighbor(self, source_cell, dx, dy):
         cell_x = (x(source_cell) + dx) % self.game.mapWidth

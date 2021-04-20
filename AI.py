@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import random
 import time
 from typing import *
@@ -7,7 +8,10 @@ from typing import *
 from Easy_map import *
 from Model import *
 
-logging.basicConfig(filename=f'logs/ant{time.time()}.log',
+if not os.path.exists('ezlog'):
+    os.makedirs('ezlog')
+
+logging.basicConfig(filename=f'ezlog/ant{time.time()}.log',
                     filemode='w',
                     format='%(message)s',
                     level=logging.DEBUG)
@@ -60,7 +64,7 @@ class AI:
         my_pos = (me.currentX, me.currentY)
         my_base = (self.game.baseX, self.game.baseY)
 
-        if resource.value > 0:
+        if resource.value > 0: #TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)
         else:
             res_pos = AI.easy_map.find_best_resource(my_pos)
