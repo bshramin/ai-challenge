@@ -1,6 +1,7 @@
 from Model import Direction
 from Model import *
 from Config import *
+from Message import *
 
 
 def x(ez_cell):
@@ -19,7 +20,8 @@ class EasyMap():
         self.walls = set()
         self.bread = dict()
         self.grass = dict()
-        self.unknown_res = dict()
+        self.unknown_res = set()
+        self.defence_cells = set()
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -32,9 +34,12 @@ class EasyMap():
 
     def _update_from_messages(self):
         # TODO:IMPROVEE
-        for message in self.game.chatBox.allChats[-1 * max_com_per_turn:]:
-            res_x, res_y, res_val = message.text.split(',')
-            self.unknown_res[(int(res_x), int(res_y))] = int(res_val)
+        for chat in self.game.chatBox.allChats[-1 * max_com_per_turn:]:
+            message_str = chat.text
+            messages = EasyMessage.unpack_message(message_str)
+            self.defence_cells.update(
+                messages.get(MessageType.MY_POS_on_RES, []))
+            self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
 
     def _update_from_local_view(self):
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
@@ -56,7 +61,8 @@ class EasyMap():
                 else:
                     self.bread.pop(easy_cell, None)
                     self.grass.pop(easy_cell, None)
-                    self.unknown_res.pop(easy_cell, None)
+                    self.unknown_res.discard(easy_cell)
+                    self.defence_cells.discard(easy_cell)
 
     def get_easy_neighbor(self, source_cell, dx, dy):
         cell_x = (x(source_cell) + dx) % self.game.mapWidth
@@ -104,14 +110,35 @@ class EasyMap():
         min_dist = map_size
         best_cell = None
         # TODO: decide res_type
-        all_resources = {**self.bread, **self.grass, **self.unknown_res}
-        for res_cell, res_val in all_resources.items():
+        for res_cell, res_val in {**self.bread, **self.grass}.items():
             # TODO: check res_value too
             dist = self.get_distance(source_cell, res_cell)
+            # TODO: also check reachablity
             if dist < min_dist:
                 min_dist = dist
                 best_cell = res_cell
+
+        if best_cell is None:
+            for res_cell in self.unknown_res:
+                dist = self.get_distance(source_cell, res_cell)
+                if dist < min_dist:
+                    min_dist = dist
+                    best_cell = res_cell
+
         return best_cell
 
-    def find_best_attack_pos(self, source_cell):  # TODO: check enemies
-        return self.find_best_resource(source_cell)
+    def find_best_attack_pos(self, source_cell):  # TODO: check enemies for attack
+        my_base = (self.game.baseX, self.game.baseY)
+        min_dist = map_size
+        best_cell = None
+
+        for def_cell in self.defence_cells:
+            dist = self.get_distance(my_base, def_cell)
+            if dist < min_dist:
+                min_dist = dist
+                best_cell = def_cell
+
+        if best_cell is None:
+            best_cell = self.find_best_resource(source_cell)
+
+        return best_cell

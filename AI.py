@@ -1,17 +1,18 @@
-import json
 import logging
 import os
 import random
 import time
-from typing import *
 
+from Config import *
 from Easy_map import *
+from Message import *
 from Model import *
 
 if not os.path.exists('ezlog'):
     os.makedirs('ezlog')
 
-logging.basicConfig(filename=f'ezlog/ant{time.time()}.log',
+time_seed = int(time.time())
+logging.basicConfig(filename=f'ezlog/ant{time_seed}.log',
                     filemode='w',
                     format='%(message)s',
                     level=logging.DEBUG)
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 class AI:
     turn_num = 0
     easy_map = EasyMap()
+    random.seed(time_seed)
 
     def __init__(self):
         # Current Game State
@@ -46,19 +48,40 @@ class AI:
                     line = line + "(   )"
             logger.info(line)
 
+    def am_i_allowed_to_tell(self, cell):
+        me = self.game.ant
+        for ant in cell.ants:
+            if ant.antType == AntType.SARBAAZ.value and ant.antTeam == AntTeam.ALLIED.value:
+                if me.antType == AntType.KARGAR:
+                    return False
+                elif random.random() < 0.4:
+                    return False
+        return True
+
     def send_message(self):
         my_base = (self.game.baseX, self.game.baseY)
-        best_val = 0  # TODO: add priorities and calc best_val in proirity
-        best_message = None
+        best_val = 0
+        all_messages = []
+
         local_resources = {**AI.easy_map.bread, **AI.easy_map.grass}
         for res_cell, res_val in local_resources.items():
             if res_cell not in AI.easy_map.local_view:  # TODO: improve
                 continue
-            val = res_val + 100 - AI.easy_map.get_distance(res_cell, my_base)
-            if val > best_val:  # TODO:check id already is in chatbox
-                best_val = val
-                best_message = f"{x(res_cell)},{y(res_cell)},{res_val}"
-        return best_message, best_val
+
+            val = res_val + 2 * map_size - \
+                AI.easy_map.get_distance(res_cell, my_base)
+            if res_cell in AI.easy_map.unknown_res:
+                val -= 60
+
+            all_messages.append((MessageType.RESOURCE, (res_cell), val))
+        my_cell = self.game.ant.getLocationCell()
+        if my_cell.resource_value > 0 and self.am_i_allowed_to_tell(my_cell):
+            val = 2 * map_size - AI.easy_map.get_distance(res_cell, my_base)
+            all_messages.append((MessageType.MY_POS_on_RES,
+                                 (my_cell.x, my_cell.y), val))
+        if len(all_messages) == 0:
+            return None, 0
+        return EasyMessage.pack_messages(all_messages)
 
     def kargar_decide(self, me):
         resource = me.currentResource
@@ -67,11 +90,14 @@ class AI:
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)
+            logger.info("base destination")
         else:
             res_pos = AI.easy_map.find_best_resource(my_pos)
+            logger.info(f"resource destination: {res_pos}")
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
             if self.direction is None:
                 self.direction = random.choice(list(Direction)[1:]).value
+                logger.info("random destination")
 
         message, value = self.send_message()
         if value != 0:
@@ -83,9 +109,11 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
 
         att_pos = AI.easy_map.find_best_attack_pos(my_pos)
+        logger.info(f"attack destination: {att_pos}")
         self.direction = AI.easy_map.get_shortest_path(my_pos, att_pos)
         if self.direction is None:
-            self.direction = random.choice(list(Direction)).value
+            self.direction = random.choice(list(Direction)[1:]).value
+            logger.info("random destination")
 
         message, value = self.send_message()
         if value != 0:
@@ -104,6 +132,8 @@ class AI:
         logger.info(f"walls: {AI.easy_map.walls}")
         logger.info(f"breads: {AI.easy_map.bread}")
         logger.info(f"garss: {AI.easy_map.grass}")
+        logger.info(f"unknown res: {AI.easy_map.unknown_res}")
+        logger.info(f"defence cells: {AI.easy_map.defence_cells}")
 
         if ant_type == AntType.KARGAR.value:
             self.kargar_decide(me)
