@@ -79,6 +79,10 @@ class AI:
             val = 2 * map_size - AI.easy_map.get_distance(res_cell, my_base)
             all_messages.append((MessageType.MY_POS_on_RES,
                                  (my_cell.x, my_cell.y), val))
+
+        for invalid in AI.easy_map.invalid_res:
+            all_messages.append((MessageType.INVALIDATE_RESOURCE, invalid, 0))
+        
         if len(all_messages) == 0:
             return None, 0
         return EasyMessage.pack_messages(all_messages)
