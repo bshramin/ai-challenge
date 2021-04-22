@@ -52,6 +52,9 @@ class EasyMap():
             self.unknown_res = set([
                 pos for pos in self.unknown_res if pos not in messages.get(MessageType.INVALIDATE_RESOURCE, [])
             ])
+            self.defence_cells = set([
+                pos for pos in self.defence_cells if pos not in messages.get(MessageType.INVALIDATE_RESOURCE, [])
+            ])
 
     def _update_from_local_view(self):
         self.to_invalid_res = set()
