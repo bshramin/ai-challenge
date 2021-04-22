@@ -83,10 +83,27 @@ class AI:
             return None, 0
         return EasyMessage.pack_messages(all_messages)
 
+    def random_walk(self):
+        dist = 0
+        while True:
+            l = self.get_all_unvisited_cells_with_dist(dist)
+            if l:
+                return random.choice(l)
+            dist += 1
+
+    def get_all_unvisited_cells_with_dist(self, dist):
+        l = []
+        for x in range(-1 * dist, dist + 1):
+            y = dist - abs(x)
+            if not (x + self.game.ant.currentX, y + self.game.ant.currentY) in AI.easy_map.visited_cells:
+                l.append((x + self.game.ant.currentX, y + self.game.ant.currentY))
+        return l
+
     def kargar_decide(self, me):
         resource = me.currentResource
         my_pos = (me.currentX, me.currentY)
         my_base = (self.game.baseX, self.game.baseY)
+        AI.easy_map.visited_cells.add(my_pos)
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)
@@ -96,8 +113,9 @@ class AI:
             logger.info(f"resource destination: {res_pos}")
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
             if self.direction is None:
-                self.direction = random.choice(list(Direction)[1:]).value
-                logger.info("random destination")
+                res_pos = self.random_walk()
+                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
+                logger.info(res_pos, "random destination")
 
         message, value = self.send_message()
         if value != 0:
@@ -107,6 +125,7 @@ class AI:
     def sarbaz_decide(self, me):
         my_pos = (me.currentX, me.currentY)
         my_base = (self.game.baseX, self.game.baseY)
+        AI.easy_map.visited_cells.add(my_pos)
 
         att_pos = AI.easy_map.find_best_attack_pos(my_pos)
         logger.info(f"attack destination: {att_pos}")
