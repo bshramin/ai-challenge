@@ -67,6 +67,8 @@ class EasyMap():
                     else:
                         self.grass[easy_cell] = cell.resource_value
                 else:
+                    if easy_cell in self.unknown_res:
+                        self.invalid_res.add(easy_cell)
                     self.bread.pop(easy_cell, None)
                     self.grass.pop(easy_cell, None)
                     self.unknown_res.discard(easy_cell)
