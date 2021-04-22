@@ -3,3 +3,5 @@ dist/
 ezlog/
 Controller.spec
 __pycache__/
+.idea
+.vscode

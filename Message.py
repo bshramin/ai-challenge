@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class MessageType:  # also major_priority
     RESOURCE = "0"
     MY_POS_on_RES = "1"
-# TODO: add undo messages
+    INVALIDATE_RESOURCE = "2"
 
 
 class EasyMessage:

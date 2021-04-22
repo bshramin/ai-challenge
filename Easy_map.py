@@ -37,13 +37,15 @@ class EasyMap():
         self._update_from_local_view()
 
     def _update_from_messages(self):
-        # TODO:IMPROVEE
-        for chat in self.game.chatBox.allChats[-1 * max_com_per_turn:]:
+        for chat in self.game.chatBox.allChats:
             message_str = chat.text
             messages = EasyMessage.unpack_message(message_str)
             self.defence_cells.update(
                 messages.get(MessageType.MY_POS_on_RES, []))
             self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
+            self.unknown_res = set([
+                pos for pos in self.unknown_res if pos not in messages.get(MessageType.INVALIDATE_RESOURCE, [])
+            ])
 
     def _update_from_local_view(self):
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
