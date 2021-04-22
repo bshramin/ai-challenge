@@ -144,13 +144,8 @@ class AI:
             self.message = message
             self.value = value
 
-    def turn(self) -> (str, int, int):
-        AI.easy_map.update(self.game)
+    def log_stuff(self):
         self.print_all_map()
-
-        me = self.game.ant
-        ant_type = me.antType
-
         logger.info(f"Turn: {AI.turn_num}")
         logger.info(f"my pos: {(me.currentX, me.currentY)}")
         logger.info(f"walls: {AI.easy_map.walls}")
@@ -158,6 +153,13 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
+
+    def turn(self) -> (str, int, int):
+        AI.easy_map.update(self.game)
+        me = self.game.ant
+        ant_type = me.antType
+
+        self.log_stuff()
 
         try:
             if ant_type == AntType.KARGAR.value:
