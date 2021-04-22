@@ -26,6 +26,7 @@ class EasyMap():
         self.unknown_res = set()
         self.defence_cells = set()
         self.visited_cells = set()
+        self.invalid_res = set()
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -48,6 +49,7 @@ class EasyMap():
             ])
 
     def _update_from_local_view(self):
+        self.invalid_res = set()
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
             for j in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
                 cell = self.game.ant.getNeightbourCell(i, j)
