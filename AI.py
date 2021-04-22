@@ -117,7 +117,7 @@ class AI:
             if self.direction is None:
                 res_pos = self.random_walk()
                 self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
-                logger.info(res_pos, "random destination")
+                logger.info("random destination")
 
         message, value = self.send_message()
         if value != 0:
@@ -133,7 +133,8 @@ class AI:
         logger.info(f"attack destination: {att_pos}")
         self.direction = AI.easy_map.get_shortest_path(my_pos, att_pos)
         if self.direction is None:
-            self.direction = random.choice(list(Direction)[1:]).value
+            res_pos = self.random_walk()
+            self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
             logger.info("random destination")
 
         message, value = self.send_message()
