@@ -146,6 +146,7 @@ class AI:
 
     def log_stuff(self):
         self.print_all_map()
+        me = self.game.ant
         logger.info(f"Turn: {AI.turn_num}")
         logger.info(f"my pos: {(me.currentX, me.currentY)}")
         logger.info(f"walls: {AI.easy_map.walls}")
