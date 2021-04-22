@@ -26,6 +26,8 @@ class EasyMap():
         self.unknown_res = set()
         self.defence_cells = set()
         self.visited_cells = set()
+        self.to_invalid_res = set()
+        self.invalidated_res = set()
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -37,15 +39,22 @@ class EasyMap():
         self._update_from_local_view()
 
     def _update_from_messages(self):
-        # TODO:IMPROVEE
-        for chat in self.game.chatBox.allChats[-1 * max_com_per_turn:]:
+        self.unknown_res = set()
+        self.invalidated_res = set()
+        self.to_invalid_res = set()
+        for chat in self.game.chatBox.allChats:
             message_str = chat.text
             messages = EasyMessage.unpack_message(message_str)
             self.defence_cells.update(
                 messages.get(MessageType.MY_POS_on_RES, []))
             self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
+            self.invalidated_res.update(messages.get(MessageType.INVALIDATE_RESOURCE, []))
+            self.unknown_res = set([
+                pos for pos in self.unknown_res if pos not in messages.get(MessageType.INVALIDATE_RESOURCE, [])
+            ])
 
     def _update_from_local_view(self):
+        self.to_invalid_res = set()
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
             for j in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
                 cell = self.game.ant.getNeightbourCell(i, j)
@@ -63,6 +72,8 @@ class EasyMap():
                     else:
                         self.grass[easy_cell] = cell.resource_value
                 else:
+                    if easy_cell in self.unknown_res:
+                        self.to_invalid_res.add(easy_cell)
                     self.bread.pop(easy_cell, None)
                     self.grass.pop(easy_cell, None)
                     self.unknown_res.discard(easy_cell)
