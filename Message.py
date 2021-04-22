@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 
 
 class MessageType:  # also major_priority
-    RESOURCE = 0
-    MY_POS_on_RES = 1
+    RESOURCE = "0"
+    MY_POS_on_RES = "1"
 # TODO: add undo messages
 
 
@@ -48,5 +48,5 @@ class EasyMessage:
             mtype, mpos_x, mpos_y = message_str.split(',')
             if mtype not in message_objects:
                 message_objects[mtype] = []
-            message_objects[mtype].append((mpos_x, mpos_y))
+            message_objects[mtype].append((int(mpos_x), int(mpos_y)))
         return message_objects
