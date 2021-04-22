@@ -28,6 +28,7 @@ class EasyMap():
         self.visited_cells = set()
         self.to_invalid_res = set()
         self.invalidated_res = set()
+        self.seen_cells = set()
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -57,6 +58,7 @@ class EasyMap():
             ])
 
     def _update_from_local_view(self):
+        self.local_view = set()
         self.to_invalid_res = set()
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
             for j in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
@@ -66,7 +68,7 @@ class EasyMap():
 
                 easy_cell = (cell.x, cell.y)
                 self.local_view.add(easy_cell)
-
+                self.seen_cells.add(easy_cell)
                 if cell.type == CellType.WALL.value:
                     self.walls.add(easy_cell)
                 elif cell.resource_value > 0:
@@ -90,7 +92,7 @@ class EasyMap():
     def is_wall(self, cell):
         return cell in self.walls
 
-    def get_shortest_path(self, source_cell, dest_cell):
+    def get_shortest_path(self, source_cell, dest_cell, only_seen=False):
         queue = [source_cell]
         visited = []
         moves_list = [[]]
@@ -119,6 +121,8 @@ class EasyMap():
 
             for cdir, cell in dir_to_cell.items():
                 if cell not in visited and not self.is_wall(cell):
+                    if only_seen and cell not in self.seen_cells:
+                        continue
                     visited.append(cell)
                     queue.append(cell)
                     moves_list.append(moves + [cdir])
