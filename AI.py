@@ -12,6 +12,8 @@ if not os.path.exists('ezlog'):
     os.makedirs('ezlog')
 
 time_seed = int(time.time())
+random.seed(time_seed)
+
 logging.basicConfig(filename=f'ezlog/ant{time_seed}.log',
                     filemode='w',
                     format='%(message)s',
@@ -23,7 +25,7 @@ logger = logging.getLogger(__name__)
 class AI:
     turn_num = 0
     easy_map = EasyMap()
-    random.seed(time_seed)
+    base_defender = random.random() < 0.4
 
     def __init__(self):
         # Current Game State
@@ -78,8 +80,9 @@ class AI:
 
         for invalid in AI.easy_map.to_invalid_res:
             if invalid not in AI.easy_map.invalidated_res:
-                all_messages.append((MessageType.INVALIDATE_RESOURCE, invalid, 0))
-        
+                all_messages.append(
+                    (MessageType.INVALIDATE_RESOURCE, invalid, 0))
+
         if len(all_messages) == 0:
             return None, 0
         return EasyMessage.pack_messages(all_messages)
@@ -117,7 +120,8 @@ class AI:
             self.direction = move
             if self.direction is None:
                 res_pos = self.random_walk()
-                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
+                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[
+                    0]
                 logger.info("random destination")
 
         message, value = self.send_message()
@@ -130,10 +134,9 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        att_pos, move = AI.easy_map.find_best_attack_pos(my_pos)
+        att_pos, move = AI.easy_map.find_sarbaz_pos(my_pos, AI.base_defender)
         logger.info(f"attack destination: {att_pos}")
         self.direction = move
-        print(move)
         if self.direction is None:
             res_pos = self.random_walk()
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
