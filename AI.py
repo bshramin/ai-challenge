@@ -117,7 +117,7 @@ class AI:
             self.direction = move
             if self.direction is None:
                 res_pos = self.random_walk()
-                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
+                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
                 logger.info("random destination")
 
         message, value = self.send_message()
@@ -136,7 +136,7 @@ class AI:
         print(move)
         if self.direction is None:
             res_pos = self.random_walk()
-            self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
+            self.direction = AI.easy_map.git (my_pos, res_pos)[0]
             logger.info("random destination")
 
         message, value = self.send_message()
