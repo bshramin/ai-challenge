@@ -48,7 +48,8 @@ class EasyMap():
             self.defence_cells.update(
                 messages.get(MessageType.MY_POS_on_RES, []))
             self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
-            self.invalidated_res.update(messages.get(MessageType.INVALIDATE_RESOURCE, []))
+            self.invalidated_res.update(messages.get(
+                MessageType.INVALIDATE_RESOURCE, []))
             self.unknown_res = set([
                 pos for pos in self.unknown_res if pos not in messages.get(MessageType.INVALIDATE_RESOURCE, [])
             ])
@@ -108,7 +109,7 @@ class EasyMap():
                 if len(moves) > 0:
                     return moves
                 else:
-                     return [Direction.CENTER.value]
+                    return [Direction.CENTER.value]
 
             dir_to_cell = {
                 Direction.UP.value: self.get_easy_neighbor(cell, 0, -1),
@@ -149,8 +150,12 @@ class EasyMap():
 
         return best_cell, best_move
 
-    def find_best_attack_pos(self, source_cell):  # TODO: check enemies for attack
+    def find_sarbaz_pos(self, source_cell, base_defence):  # TODO: check enemies for attack
         my_base = (self.game.baseX, self.game.baseY)
+        if base_defence:
+            logger.info("base defence")
+            return my_base, self.get_shortest_path(source_cell, my_base)[0]
+
         min_dist = map_size
         best_cell = None
         best_move = None
