@@ -108,12 +108,12 @@ class AI:
         AI.easy_map.visited_cells.add(my_pos)
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
-            self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)
+            self.direction = AI.easy_map.get_shortest_path(my_pos, my_base)[0]
             logger.info("base destination")
         else:
-            res_pos = AI.easy_map.find_best_resource(my_pos)
+            res_pos, move = AI.easy_map.find_best_resource(my_pos)
             logger.info(f"resource destination: {res_pos}")
-            self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
+            self.direction = move
             if self.direction is None:
                 res_pos = self.random_walk()
                 self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
@@ -129,9 +129,10 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        att_pos = AI.easy_map.find_best_attack_pos(my_pos)
+        att_pos, move = AI.easy_map.find_best_attack_pos(my_pos)
         logger.info(f"attack destination: {att_pos}")
-        self.direction = AI.easy_map.get_shortest_path(my_pos, att_pos)
+        self.direction = move
+        print(move)
         if self.direction is None:
             res_pos = self.random_walk()
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)
@@ -157,10 +158,14 @@ class AI:
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
 
-        if ant_type == AntType.KARGAR.value:
-            self.kargar_decide(me)
-        else:
-            self.sarbaz_decide(me)
+        try:
+            if ant_type == AntType.KARGAR.value:
+                self.kargar_decide(me)
+            else:
+                self.sarbaz_decide(me)
+        except Exception as e:
+            logger.info("***EXCEPTION***")
+            logger.exception(e)
 
         logger.info(
             f"decide: { self.direction} - message: {self.message} - value: { self.value}")

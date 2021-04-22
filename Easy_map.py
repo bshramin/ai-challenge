@@ -1,7 +1,10 @@
-from Model import Direction
-from Model import *
+import logging
+
 from Config import *
 from Message import *
+from Model import *
+
+logger = logging.getLogger(__name__)
 
 
 def x(ez_cell):
@@ -81,7 +84,7 @@ class EasyMap():
         visited.append(source_cell)
         while True:
             if len(queue) == 0:
-                return None
+                return []
 
             cell = queue[0]
             moves = moves_list[0]
@@ -89,9 +92,9 @@ class EasyMap():
             del moves_list[0]
             if cell == dest_cell:
                 if len(moves) > 0:
-                    return moves[0]
+                    return moves
                 else:
-                    return None
+                     return [Direction.CENTER.value]
 
             dir_to_cell = {
                 Direction.UP.value: self.get_easy_neighbor(cell, 0, -1),
@@ -110,36 +113,43 @@ class EasyMap():
         # TODO: maybe check outside of local too
         min_dist = map_size
         best_cell = None
+        best_move = None
         # TODO: decide res_type
         for res_cell, res_val in {**self.bread, **self.grass}.items():
             # TODO: check res_value too
-            dist = self.get_distance(source_cell, res_cell)
-            # TODO: also check reachablity
-            if dist < min_dist:
+            moves = self.get_shortest_path(source_cell, res_cell)
+            dist = len(moves)
+            if dist > 0 and dist < min_dist:
                 min_dist = dist
                 best_cell = res_cell
+                best_move = moves[0]
 
         if best_cell is None:
             for res_cell in self.unknown_res:
-                dist = self.get_distance(source_cell, res_cell)
-                if dist < min_dist:
+                moves = self.get_shortest_path(source_cell, res_cell)
+                dist = len(moves)
+                if dist > 0 and dist < min_dist:
                     min_dist = dist
                     best_cell = res_cell
+                    best_move = moves[0]
 
-        return best_cell
+        return best_cell, best_move
 
     def find_best_attack_pos(self, source_cell):  # TODO: check enemies for attack
         my_base = (self.game.baseX, self.game.baseY)
         min_dist = map_size
         best_cell = None
+        best_move = None
 
         for def_cell in self.defence_cells:
-            dist = self.get_distance(my_base, def_cell)
-            if dist < min_dist:
+            moves = self.get_shortest_path(source_cell, def_cell)
+            dist = len(moves)
+            if dist > 0 and dist < min_dist:
                 min_dist = dist
                 best_cell = def_cell
+                best_move = moves[0]
 
         if best_cell is None:
-            best_cell = self.find_best_resource(source_cell)
+            best_cell, best_move = self.find_best_resource(source_cell)
 
-        return best_cell
+        return best_cell, best_move

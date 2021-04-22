@@ -1,0 +1,5 @@
+build/
+dist/
+ezlog/
+Controller.spec
+__pycache__/
