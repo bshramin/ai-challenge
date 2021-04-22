@@ -91,10 +91,9 @@ class EasyMap():
             del moves_list[0]
             if cell == dest_cell:
                 if len(moves) > 0:
-                    logger.info(f"moves {moves}")
                     return moves
                 else:
-                    return []
+                     return [Direction.CENTER.value]
 
             dir_to_cell = {
                 Direction.UP.value: self.get_easy_neighbor(cell, 0, -1),
@@ -142,7 +141,7 @@ class EasyMap():
         best_move = None
 
         for def_cell in self.defence_cells:
-            moves = self.get_shortest_path(my_base, def_cell)
+            moves = self.get_shortest_path(source_cell, def_cell)
             dist = len(moves)
             if dist > 0 and dist < min_dist:
                 min_dist = dist
@@ -150,6 +149,6 @@ class EasyMap():
                 best_move = moves[0]
 
         if best_cell is None:
-            best_cell, best_move = self.find_best_resource(my_base)
+            best_cell, best_move = self.find_best_resource(source_cell)
 
         return best_cell, best_move
