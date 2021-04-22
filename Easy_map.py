@@ -22,6 +22,7 @@ class EasyMap():
         self.grass = dict()
         self.unknown_res = set()
         self.defence_cells = set()
+        self.visited_cells = set()
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
