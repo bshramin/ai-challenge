@@ -93,10 +93,12 @@ class AI:
 
     def get_all_unvisited_cells_with_dist(self, dist):
         l = []
+        my_pos = (self.game.ant.currentX, self.game.ant.currentY)
         for x in range(-1 * dist, dist + 1):
             y = dist - abs(x)
-            if not (x + self.game.ant.currentX, y + self.game.ant.currentY) in AI.easy_map.visited_cells:
-                l.append((x + self.game.ant.currentX, y + self.game.ant.currentY))
+            pos = AI.easy_map.get_easy_neighbor(my_pos, x, y)
+            if not pos in AI.easy_map.visited_cells and not AI.easy_map.is_wall(pos):
+                l.append(pos)
         return l
 
     def kargar_decide(self, me):
