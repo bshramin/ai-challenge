@@ -18,8 +18,9 @@ class EasyMessage:
     '''
 
     major_priority_map = {
-        MessageType.RESOURCE: 100,
-        MessageType.MY_POS_on_RES: 200,
+        MessageType.RESOURCE: 200,
+        MessageType.MY_POS_on_RES: 100,
+        MessageType.INVALIDATE_RESOURCE: 200
     }
 
     @staticmethod

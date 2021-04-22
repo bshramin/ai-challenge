@@ -68,20 +68,17 @@ class AI:
             if res_cell not in AI.easy_map.local_view:  # TODO: improve
                 continue
 
-            val = res_val + 2 * map_size - \
-                AI.easy_map.get_distance(res_cell, my_base)
-            if res_cell in AI.easy_map.unknown_res:
-                val -= 60
+            if res_cell not in AI.easy_map.unknown_res:
+                all_messages.append((MessageType.RESOURCE, (res_cell), 0))
 
-            all_messages.append((MessageType.RESOURCE, (res_cell), val))
         my_cell = self.game.ant.getLocationCell()
         if my_cell.resource_value > 0 and self.am_i_allowed_to_tell(my_cell):
-            val = 2 * map_size - AI.easy_map.get_distance(res_cell, my_base)
             all_messages.append((MessageType.MY_POS_on_RES,
-                                 (my_cell.x, my_cell.y), val))
+                                 (my_cell.x, my_cell.y), 0))
 
-        for invalid in AI.easy_map.invalid_res:
-            all_messages.append((MessageType.INVALIDATE_RESOURCE, invalid, 0))
+        for invalid in AI.easy_map.to_invalid_res:
+            if invalid not in AI.easy_map.invalidated_res:
+                all_messages.append((MessageType.INVALIDATE_RESOURCE, invalid, 0))
         
         if len(all_messages) == 0:
             return None, 0
