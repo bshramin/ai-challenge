@@ -20,7 +20,9 @@ class EasyMap():
     def __init__(self):
         self.game: Game = None
         self.last_health = None
+        self.last_last_cell = None
         self.last_cell = None
+        self.VAHSHI_ATTACK_MODE = False
 
         self.local_view = set()
         self.walls = set()
@@ -35,8 +37,12 @@ class EasyMap():
         self.seen_cells = set()
 
         self.enemy_base = None
-        self.around_enemy_base = set()
+        self.zero_around_enemy_base = set()
+        self.first_around_enemy_base = set()
+        self.second_around_enemy_base = set()
+
         self.around_enemy_sarbaz_count = 0
+        self.around_friend_sarbaz_count = 0
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -61,8 +67,14 @@ class EasyMap():
             self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
             if messages.get(MessageType.ENEMY_BASE_FOUND):
                 self.enemy_base = messages.get(MessageType.ENEMY_BASE_FOUND)[0]
-            self.around_enemy_base.update(messages.get(
-                MessageType.ATTACKED_BY_ENEMY_BASE, []))
+
+            self.zero_around_enemy_base.update(messages.get(
+                MessageType.ZERO_ATTACK_BY_ENEMY_BASE, []))
+            self.first_around_enemy_base.update(messages.get(
+                MessageType.FIRST_ATTACK_BY_ENEMY_BASE, []))
+            self.second_around_enemy_base.update(messages.get(
+                MessageType.SECOND_ATTACK_BY_ENEMY_BASE, []))
+
             self.invalidated_res.update(messages.get(
                 MessageType.INVALIDATE_RESOURCE, []))
 
@@ -89,8 +101,11 @@ class EasyMap():
                 self.seen_cells.add(easy_cell)
 
                 for ant in cell.ants:
-                    if ant.antType == AntType.SARBAAZ.value and ant.antTeam != self.game.ant.antTeam:
-                        self.around_enemy_sarbaz_count += 1
+                    if ant.antType == AntType.SARBAAZ.value:
+                        if ant.antTeam != self.game.ant.antTeam:
+                            self.around_enemy_sarbaz_count += 1
+                        elif easy_cell in self.zero_around_enemy_base:
+                            self.around_friend_sarbaz_count += 1
 
                 if cell.type == CellType.WALL.value:
                     self.walls.add(easy_cell)
@@ -122,9 +137,17 @@ class EasyMap():
         logger.info(
             f"Last health: {self.last_health}, Now health: {self.game.ant.health}")
         if damage_given % 2 != 0:
-            self.around_enemy_base.add(self.last_cell)
+            if self.last_last_cell not in self.first_around_enemy_base and \
+                    self.last_last_cell not in self.second_around_enemy_base:
+                self.zero_around_enemy_base.add(self.last_last_cell)
+                self.first_around_enemy_base.add(self.last_cell)
+            elif self.last_last_cell not in self.second_around_enemy_base:
+                self.second_around_enemy_base.add(self.last_cell)
 
         self.last_health = self.game.ant.health
+        logger.info(
+            f"Last last pos: {self.last_last_cell}, last pos: {self.last_cell}")
+        self.last_last_cell = self.last_cell
         self.last_cell = my_pos
 
     def get_easy_neighbor(self, source_cell, dx, dy):
@@ -247,11 +270,17 @@ class EasyMap():
 
         if self.enemy_base:
             return self.enemy_base, self.get_shortest_path(source_cell, self.enemy_base)[0]
-        else:
-            if source_cell in self.around_enemy_base:  # TODO: FIND BASE
-                logger.info(f"Im around base: {source_cell}")
-                return None, None
-            for att_cell in self.around_enemy_base:
+        elif self.second_around_enemy_base:
+            return self.find_base(source_cell)
+        elif self.first_around_enemy_base:
+            if source_cell in self.zero_around_enemy_base:  # TODO: FIND BASE
+                if self.around_friend_sarbaz_count < 2:
+                    logger.info(f"wait in ZERO around base: {source_cell}")
+                    return source_cell, Direction.CENTER.value
+                logger.info(f"FIRST around base: {source_cell}")
+                return self.find_base(source_cell)
+            logger.info(f"GOING TO find enemy base: {source_cell}")
+            for att_cell in self.zero_around_enemy_base:
                 moves = self.get_shortest_path(source_cell, att_cell)
                 dist = len(moves)
                 if dist > 0 and dist < min_dist:
@@ -262,4 +291,24 @@ class EasyMap():
         return best_cell, best_move
 
     def find_base(self, source_cell):
-        pass
+        if source_cell in self.zero_around_enemy_base:
+            for cell in self.first_around_enemy_base:
+                if self.get_distance(source_cell, cell) == 1:
+                    return cell, self.get_shortest_path(source_cell, cell)[0]
+
+        dir_to_cell = {
+            Direction.UP.value: self.get_easy_neighbor(source_cell, 0, -1),
+            Direction.DOWN.value: self.get_easy_neighbor(source_cell, 0, 1),
+            Direction.RIGHT.value: self.get_easy_neighbor(source_cell, 1, 0),
+            Direction.LEFT.value: self.get_easy_neighbor(source_cell, -1, 0),
+        }
+
+        for cdir, cell in dir_to_cell.items():
+            if not self.is_wall(cell) and self not in self.visited_cells:
+                if source_cell in self.second_around_enemy_base:
+                    if cell not in self.first_around_enemy_base:
+                        return cell, self.get_shortest_path(source_cell, cell)[0]
+                elif source_cell in self.first_around_enemy_base:
+                    return cell, self.get_shortest_path(source_cell, cell)[0]
+
+        return None, None

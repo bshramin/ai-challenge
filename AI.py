@@ -88,10 +88,15 @@ class AI:
                        (AI.easy_map.enemy_base), 0)
             all_messages.append(message)
 
-        if (my_cell.x, my_cell.y) in AI.easy_map.around_enemy_base:
-            message = (MessageType.ATTACKED_BY_ENEMY_BASE,
-                       (my_cell.x, my_cell.y), 0)
-            all_messages.append(message)
+        if AI.easy_map.last_cell in AI.easy_map.first_around_enemy_base:
+            all_messages.append((MessageType.ZERO_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_last_cell), 0))
+            all_messages.append((MessageType.FIRST_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_cell), 0))
+            
+        if AI.easy_map.last_cell in AI.easy_map.second_around_enemy_base:
+            all_messages.append((MessageType.SECOND_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_cell), 0))
 
         if len(all_messages) == 0:
             return None, 0
@@ -156,7 +161,9 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
-        logger.info(f"around base cells: {AI.easy_map.around_enemy_base}")
+        logger.info(f"ZERO around base cells: {AI.easy_map.first_around_enemy_base}")
+        logger.info(f"FIRST around base cells: {AI.easy_map.first_around_enemy_base}")
+        logger.info(f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
         logger.info(f"enemy base: {AI.easy_map.enemy_base}")
 
     def turn(self) -> (str, int, int):
