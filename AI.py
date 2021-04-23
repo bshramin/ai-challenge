@@ -136,7 +136,7 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        if AI.easy_map.enemy_base or not AI.defender:
+        if not AI.defender:
             att_pos, move = AI.easy_map.find_attack_pos(my_pos)
             logger.info(f"attack destination: {att_pos}")
             self.direction = move
