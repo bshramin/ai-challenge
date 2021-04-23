@@ -25,9 +25,8 @@ logger = logging.getLogger(__name__)
 class AI:
     turn_num = 0
     easy_map = EasyMap()
-    base_defender = random.random() < 0.3
-    path_finder = not base_defender
-    did_the_base_attacked_me_last_turn = False
+    resource_defender = random.random() < 0.3
+    path_finder = not resource_defender
 
     def __init__(self):
         # Current Game State
@@ -70,6 +69,8 @@ class AI:
         damage_given = max_health - self.game.ant.health
         if damage_given % 2 != 0:
             return True
+        if self.easy_map.around_sarbaz_count == 0:
+            return True
         return False
 
     def send_message(self):
@@ -78,8 +79,8 @@ class AI:
         my_cell = self.game.ant.getLocationCell()
         all_messages = []
 
-        for cell in self.easy_map.enemy_base:
-            message = (MessageType.ENEMY_BASE_FOUND, (cell), 0)
+        if self.easy_map.enemy_base:
+            message = (MessageType.ENEMY_BASE_FOUND, (self.easy_map.enemy_base), 0)
             all_messages.append(message)
 
         if self.am_i_near_enemy_base():
@@ -156,12 +157,16 @@ class AI:
         AI.easy_map.visited_cells.add(my_pos)
 
         if self.easy_map.enemy_base:
-            self.direction = AI.easy_map.get_shortest_path(my_pos, self.easy_map.enemy_base[0])[0]
+            self.direction = AI.easy_map.get_shortest_path(my_pos, self.easy_map.enemy_base)[0]
         elif self.easy_map.around_base:
-            for cell in self.easy_map.around_base:
-                moves = AI.easy_map.get_shortest_path(my_pos, cell)
-                if len(moves) > 0:
-                    self.direction = moves[0]
+            if my_pos in self.easy_map.around_base:
+                des_pos = self.random_walk()
+                self.direction = AI.easy_map.get_shortest_path(my_pos, des_pos)[0]
+            else:
+                for cell in self.easy_map.around_base:
+                    moves = AI.easy_map.get_shortest_path(my_pos, cell)
+                    if len(moves) > 0:
+                        self.direction = moves[0]
         elif self.path_finder:
             res_pos = self.random_walk()
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
@@ -190,7 +195,7 @@ class AI:
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
         logger.info(f"around base cells: {AI.easy_map.around_base}")
-        logger.info(f"enemy base cells: {AI.easy_map.enemy_base}")
+        logger.info(f"enemy base cell: {AI.easy_map.enemy_base}")
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)

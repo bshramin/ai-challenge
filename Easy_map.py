@@ -29,8 +29,9 @@ class EasyMap():
         self.to_invalid_res = set()
         self.invalidated_res = set()
         self.seen_cells = set()
-        self.enemy_base = set()
+        self.enemy_base = None
         self.around_base = set()
+        self.around_sarbaz_count = 0
 
     @staticmethod
     def get_distance(source_cell, dest_cell):
@@ -51,7 +52,8 @@ class EasyMap():
             self.defence_cells.update(
                 messages.get(MessageType.MY_POS_on_RES, []))
             self.unknown_res.update(messages.get(MessageType.RESOURCE, []))
-            self.enemy_base.update(messages.get(MessageType.ENEMY_BASE_FOUND, []))
+            if messages.get(MessageType.ENEMY_BASE_FOUND):
+                self.enemy_base = messages.get(MessageType.ENEMY_BASE_FOUND)[0]
             self.around_base.update(messages.get(MessageType.ATTACKED_BY_ENEMY_BASE, []))
             self.invalidated_res.update(messages.get(
                 MessageType.INVALIDATE_RESOURCE, []))
@@ -65,6 +67,7 @@ class EasyMap():
     def _update_from_local_view(self):
         self.local_view = set()
         self.to_invalid_res = set()
+        self.around_sarbaz_count = 0
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
             for j in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
                 cell = self.game.ant.getNeightbourCell(i, j)
@@ -72,12 +75,16 @@ class EasyMap():
                     continue
 
                 easy_cell = (cell.x, cell.y)
+                my_base = (self.game.baseX, self.game.baseY)
                 self.local_view.add(easy_cell)
                 self.seen_cells.add(easy_cell)
+                for ant in cell.ants:
+                    if ant.antType == AntType.SARBAAZ.value and ant.antTeam != self.game.ant.antTeam:
+                        self.around_sarbaz_count += 1
                 if cell.type == CellType.WALL.value:
                     self.walls.add(easy_cell)
-                if cell.type == CellType.BASE.value and cell.x != self.game.baseX:
-                    self.enemy_base.add(easy_cell)
+                elif cell.type == CellType.BASE.value and easy_cell != my_base:
+                    self.enemy_base = easy_cell
                 elif cell.resource_value > 0:
                     if cell.resource_type == ResourceType.BREAD.value:
                         self.bread[easy_cell] = cell.resource_value
