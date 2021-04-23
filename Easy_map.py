@@ -139,7 +139,8 @@ class EasyMap():
         if damage_given % 2 != 0:
             if self.last_last_cell not in self.first_around_enemy_base and \
                     self.last_last_cell not in self.second_around_enemy_base:
-                self.zero_around_enemy_base.add(self.last_last_cell)
+                if self.last_last_cell not in self.first_around_enemy_base:
+                    self.zero_around_enemy_base.add(self.last_last_cell)
                 self.first_around_enemy_base.add(self.last_cell)
             elif self.last_last_cell not in self.second_around_enemy_base:
                 self.second_around_enemy_base.add(self.last_cell)

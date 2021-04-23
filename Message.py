@@ -12,7 +12,7 @@ class MessageType:  # also major_priority
     ZERO_ATTACK_BY_ENEMY_BASE = "3"
     FIRST_ATTACK_BY_ENEMY_BASE = "4"
     SECOND_ATTACK_BY_ENEMY_BASE = "5"
-    ENEMY_BASE_FOUND = "5"
+    ENEMY_BASE_FOUND = "6"
 
 
 class EasyMessage:
