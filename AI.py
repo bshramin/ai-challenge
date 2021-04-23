@@ -161,7 +161,7 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
-        logger.info(f"ZERO around base cells: {AI.easy_map.first_around_enemy_base}")
+        logger.info(f"ZERO around base cells: {AI.easy_map.zero_around_enemy_base}")
         logger.info(f"FIRST around base cells: {AI.easy_map.first_around_enemy_base}")
         logger.info(f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
         logger.info(f"enemy base: {AI.easy_map.enemy_base}")
@@ -182,6 +182,9 @@ class AI:
             logger.info("***EXCEPTION***")
             logger.exception(e)
 
+        AI.easy_map.last_last_cell = AI.easy_map.last_cell
+        AI.easy_map.last_cell = (me.currentX, me.currentY)
+        
         logger.info(
             f"decide: { self.direction} - message: {self.message} - value: { self.value}")
         logger.info("")

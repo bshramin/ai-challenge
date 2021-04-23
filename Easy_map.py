@@ -137,19 +137,21 @@ class EasyMap():
         logger.info(
             f"Last health: {self.last_health}, Now health: {self.game.ant.health}")
         if damage_given % 2 != 0:
-            if self.last_last_cell not in self.first_around_enemy_base and \
-                    self.last_last_cell not in self.second_around_enemy_base:
-                if self.last_last_cell not in self.first_around_enemy_base:
+            if self.last_cell not in self.first_around_enemy_base and self.last_cell not in self.second_around_enemy_base:
+                if self.last_last_cell in self.first_around_enemy_base:
+                    self.second_around_enemy_base.add(self.last_cell)
+                elif self.last_last_cell in self.second_around_enemy_base:
+                    self.first_around_enemy_base.add(self.last_cell)
+                else:
                     self.zero_around_enemy_base.add(self.last_last_cell)
-                self.first_around_enemy_base.add(self.last_cell)
-            elif self.last_last_cell not in self.second_around_enemy_base:
-                self.second_around_enemy_base.add(self.last_cell)
+                    self.first_around_enemy_base.add(self.last_cell)
+        else:
+            if self.last_last_cell in self.first_around_enemy_base:
+                self.zero_around_enemy_base.add(self.last_cell)
 
         self.last_health = self.game.ant.health
         logger.info(
             f"Last last pos: {self.last_last_cell}, last pos: {self.last_cell}")
-        self.last_last_cell = self.last_cell
-        self.last_cell = my_pos
 
     def get_easy_neighbor(self, source_cell, dx, dy):
         cell_x = (x(source_cell) + dx) % self.game.mapWidth
@@ -271,7 +273,7 @@ class EasyMap():
 
         if self.enemy_base:
             return self.enemy_base, self.get_shortest_path(source_cell, self.enemy_base)[0]
-        elif self.second_around_enemy_base:
+        elif source_cell in self.second_around_enemy_base or source_cell in self.first_around_enemy_base:
             return self.find_base(source_cell)
         elif self.first_around_enemy_base:
             if source_cell in self.zero_around_enemy_base:  # TODO: FIND BASE
@@ -280,15 +282,16 @@ class EasyMap():
                     return source_cell, Direction.CENTER.value
                 logger.info(f"FIRST around base: {source_cell}")
                 return self.find_base(source_cell)
-            logger.info(f"GOING TO find enemy base: {source_cell}")
-            for att_cell in self.zero_around_enemy_base:
-                moves = self.get_shortest_path(source_cell, att_cell)
-                dist = len(moves)
-                if dist > 0 and dist < min_dist:
-                    min_dist = dist
-                    best_cell = att_cell
-                    best_move = moves[0]
-            return best_cell, best_move
+            else:
+                logger.info(f"GOING TO find enemy base: {source_cell}")
+                for att_cell in self.zero_around_enemy_base:
+                    moves = self.get_shortest_path(source_cell, att_cell)
+                    dist = len(moves)
+                    if dist > 0 and dist < min_dist:
+                        min_dist = dist
+                        best_cell = att_cell
+                        best_move = moves[0]
+                return best_cell, best_move
         return best_cell, best_move
 
     def find_base(self, source_cell):
@@ -304,12 +307,18 @@ class EasyMap():
             Direction.LEFT.value: self.get_easy_neighbor(source_cell, -1, 0),
         }
 
+        good_cells = []
         for cdir, cell in dir_to_cell.items():
-            if not self.is_wall(cell) and self not in self.visited_cells:
+            if not self.is_wall(cell) and cell not in self.visited_cells:
                 if source_cell in self.second_around_enemy_base:
                     if cell not in self.first_around_enemy_base:
-                        return cell, self.get_shortest_path(source_cell, cell)[0]
-                elif source_cell in self.first_around_enemy_base:
-                    return cell, self.get_shortest_path(source_cell, cell)[0]
+                        good_cells.append(cell)
 
+                elif source_cell in self.first_around_enemy_base:
+                    good_cells.append(cell)
+
+        if good_cells:
+            logger.info(f"good cells: {good_cells}")
+            random_good_cell = random.choice(good_cells)
+            return random_good_cell, self.get_shortest_path(source_cell, random_good_cell)[0]
         return None, None
