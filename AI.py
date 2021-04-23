@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class AI:
     turn_num = 0
     easy_map = EasyMap()
-    base_defender = random.random() < 0.4
+    defender = random.random() < 0.3
 
     def __init__(self):
         # Current Game State
@@ -83,27 +83,24 @@ class AI:
                 all_messages.append(
                     (MessageType.INVALIDATE_RESOURCE, invalid, 0))
 
+        if AI.easy_map.enemy_base:
+            message = (MessageType.ENEMY_BASE_FOUND,
+                       (AI.easy_map.enemy_base), 0)
+            all_messages.append(message)
+
+        if AI.easy_map.last_cell in AI.easy_map.first_around_enemy_base:
+            all_messages.append((MessageType.ZERO_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_last_cell), 0))
+            all_messages.append((MessageType.FIRST_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_cell), 0))
+            
+        if AI.easy_map.last_cell in AI.easy_map.second_around_enemy_base:
+            all_messages.append((MessageType.SECOND_ATTACK_BY_ENEMY_BASE,
+                       (AI.easy_map.last_cell), 0))
+
         if len(all_messages) == 0:
             return None, 0
         return EasyMessage.pack_messages(all_messages)
-
-    def random_walk(self):
-        dist = 0
-        while True:
-            l = self.get_all_unvisited_cells_with_dist(dist)
-            if l:
-                return random.choice(l)
-            dist += 1
-
-    def get_all_unvisited_cells_with_dist(self, dist):
-        l = []
-        my_pos = (self.game.ant.currentX, self.game.ant.currentY)
-        for x in range(-1 * dist, dist + 1):
-            y = dist - abs(x)
-            pos = AI.easy_map.get_easy_neighbor(my_pos, x, y)
-            if not pos in AI.easy_map.visited_cells and not AI.easy_map.is_wall(pos):
-                l.append(pos)
-        return l
 
     def kargar_decide(self, me):
         resource = me.currentResource
@@ -112,17 +109,18 @@ class AI:
         AI.easy_map.visited_cells.add(my_pos)
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
-            self.direction = AI.easy_map.get_shortest_path(my_pos, my_base, True)[0]
+            self.direction = AI.easy_map.get_shortest_path(
+                my_pos, my_base, True)[0]
             logger.info("base destination")
         else:
             res_pos, move = AI.easy_map.find_best_resource(my_pos)
             logger.info(f"resource destination: {res_pos}")
             self.direction = move
-            if self.direction is None:
-                res_pos = self.random_walk()
-                self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[
-                    0]
-                logger.info("random destination")
+
+        if self.direction is None:
+            rand_pos, move = AI.easy_map.random_walk(my_pos)
+            logger.info(f"random destination {rand_pos}")
+            self.direction = move
 
         message, value = self.send_message()
         if value != 0:
@@ -134,13 +132,19 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        att_pos, move = AI.easy_map.find_sarbaz_pos(my_pos, AI.base_defender)
-        logger.info(f"attack destination: {att_pos}")
-        self.direction = move
+        if AI.easy_map.enemy_base or not AI.defender:
+            att_pos, move = AI.easy_map.find_attack_pos(my_pos)
+            logger.info(f"attack destination: {att_pos}")
+            self.direction = move
+        else:
+            def_pos, move = AI.easy_map.find_defend_pos(my_pos)
+            logger.info(f"defend destination: {def_pos}")
+            self.direction = move
+
         if self.direction is None:
-            res_pos = self.random_walk()
-            self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
-            logger.info("random destination")
+            rand_pos, move = AI.easy_map.random_walk(my_pos)
+            logger.info(f"random destination {rand_pos}")
+            self.direction = move
 
         message, value = self.send_message()
         if value != 0:
@@ -157,6 +161,10 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
+        logger.info(f"ZERO around base cells: {AI.easy_map.zero_around_enemy_base}")
+        logger.info(f"FIRST around base cells: {AI.easy_map.first_around_enemy_base}")
+        logger.info(f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
+        logger.info(f"enemy base: {AI.easy_map.enemy_base}")
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)
@@ -174,6 +182,9 @@ class AI:
             logger.info("***EXCEPTION***")
             logger.exception(e)
 
+        AI.easy_map.last_last_cell = AI.easy_map.last_cell
+        AI.easy_map.last_cell = (me.currentX, me.currentY)
+        
         logger.info(
             f"decide: { self.direction} - message: {self.message} - value: { self.value}")
         logger.info("")
