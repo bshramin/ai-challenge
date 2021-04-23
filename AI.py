@@ -27,7 +27,6 @@ class AI:
     easy_map = EasyMap()
     base_defender = random.random() < 0.3
     path_finder = not base_defender
-    last_turn_health = 5
     did_the_base_attacked_me_last_turn = False
 
     def __init__(self):
@@ -64,7 +63,11 @@ class AI:
         return True
 
     def am_i_near_enemy_base(self):
-        damage_given = self.last_turn_health - self.game.ant.health
+        if self.game.ant.antType == AntType.KARGAR.value:
+            max_health = self.game.healthKargar
+        else:
+            max_health = self.game.healthSarbaaz
+        damage_given = max_health - self.game.ant.health
         if damage_given % 2 != 0:
             return True
         return False
@@ -75,7 +78,12 @@ class AI:
         my_cell = self.game.ant.getLocationCell()
         all_messages = []
 
+        for cell in self.easy_map.enemy_base:
+            message = (MessageType.ENEMY_BASE_FOUND, (cell), 0)
+            all_messages.append(message)
+
         if self.am_i_near_enemy_base():
+            self.easy_map.around_base.add((my_cell.x, my_cell.y))
             message = (MessageType.ATTACKED_BY_ENEMY_BASE, (my_cell.x, my_cell.y), 0)
             all_messages.append(message)
 
@@ -147,7 +155,14 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        if self.path_finder:
+        if self.easy_map.enemy_base:
+            self.direction = AI.easy_map.get_shortest_path(my_pos, self.easy_map.enemy_base[0])[0]
+        elif self.easy_map.around_base:
+            for cell in self.easy_map.around_base:
+                moves = AI.easy_map.get_shortest_path(my_pos, cell)
+                if len(moves) > 0:
+                    self.direction = moves[0]
+        elif self.path_finder:
             res_pos = self.random_walk()
             self.direction = AI.easy_map.get_shortest_path(my_pos, res_pos)[0]
         else:
@@ -174,6 +189,8 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
+        logger.info(f"around base cells: {AI.easy_map.around_base}")
+        logger.info(f"enemy base cells: {AI.easy_map.enemy_base}")
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)
@@ -190,7 +207,6 @@ class AI:
         except Exception as e:
             logger.info("***EXCEPTION***")
             logger.exception(e)
-        self.last_turn_health = self.game.ant.health
         logger.info(
             f"decide: { self.direction} - message: {self.message} - value: { self.value}")
         logger.info("")
