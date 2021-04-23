@@ -283,7 +283,7 @@ class EasyMap():
         best_move = None
 
         if source_cell in self.second_around_enemy_base or source_cell in self.first_around_enemy_base \
-                or (self.enemy_base and self.get_distance(source_cell, self.enemy_base) < self.game.ant.attackDistance) \
+                or (self.enemy_base and self.get_distance(source_cell, self.enemy_base) <= self.game.ant.attackDistance) \
                 or self.last_cell in self.first_around_enemy_base:
             return self.attack_base(source_cell)
         if source_cell in self.zero_around_enemy_base:
