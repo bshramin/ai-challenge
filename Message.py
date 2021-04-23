@@ -9,6 +9,8 @@ class MessageType:  # also major_priority
     RESOURCE = "0"
     MY_POS_on_RES = "1"
     INVALIDATE_RESOURCE = "2"
+    ATTACKED_BY_ENEMY_BASE = "3"
+    ENEMY_BASE_FOUND = "4"
 
 
 class EasyMessage:
@@ -20,7 +22,9 @@ class EasyMessage:
     major_priority_map = {
         MessageType.RESOURCE: 200,
         MessageType.MY_POS_on_RES: 100,
-        MessageType.INVALIDATE_RESOURCE: 200
+        MessageType.INVALIDATE_RESOURCE: 200,
+        MessageType.ENEMY_BASE_FOUND: 10000,
+        MessageType.ATTACKED_BY_ENEMY_BASE: 5000,
     }
 
     @staticmethod
