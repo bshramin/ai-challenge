@@ -125,6 +125,13 @@ class EasyMap():
                     self.unknown_res.discard(easy_cell)
                     self.defence_cells.discard(easy_cell)
 
+        if self.enemy_base:
+            zero_range = base_range + 1
+            for dx in range(-1 * zero_range, zero_range + 1):
+                dy = zero_range - abs(dx)
+                zero_cell = self.get_easy_neighbor(self.enemy_base, dx, dy)
+                self.zero_around_enemy_base.add(zero_cell)
+
     def am_i_near_enemy_base(self):
         my_pos = (self.game.ant.currentX, self.game.ant.currentY)
 
@@ -280,7 +287,7 @@ class EasyMap():
                 or self.last_cell in self.first_around_enemy_base:
             return self.attack_base(source_cell)
         if source_cell in self.zero_around_enemy_base:
-            if self.around_friend_sarbaz_count < 4:
+            if self.around_friend_sarbaz_count < 3:
                 logger.info(f"wait in ZERO around base: {source_cell}")
                 return source_cell, Direction.CENTER.value
             return self.attack_base(source_cell)
