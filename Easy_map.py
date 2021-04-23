@@ -89,6 +89,7 @@ class EasyMap():
         self.local_view = set()
         self.to_invalid_res = set()
         self.around_enemy_sarbaz_count = 0
+        self.around_friend_sarbaz_count = 0
 
         for i in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
             for j in range(-1 * self.game.viewDistance, self.game.viewDistance + 1):
@@ -282,6 +283,8 @@ class EasyMap():
                     return source_cell, Direction.CENTER.value
                 logger.info(f"FIRST around base: {source_cell}")
                 return self.find_base(source_cell)
+            elif self.last_cell in self.first_around_enemy_base:
+                return self.find_base(source_cell)
             else:
                 logger.info(f"GOING TO find enemy base: {source_cell}")
                 for att_cell in self.zero_around_enemy_base:
@@ -309,13 +312,19 @@ class EasyMap():
 
         good_cells = []
         for cdir, cell in dir_to_cell.items():
-            if not self.is_wall(cell) and cell not in self.visited_cells:
+            if not self.is_wall(cell):
                 if source_cell in self.second_around_enemy_base:
-                    if cell not in self.first_around_enemy_base:
+                    if cell not in self.first_around_enemy_base and cell not in self.visited_cells:
                         good_cells.append(cell)
 
                 elif source_cell in self.first_around_enemy_base:
-                    good_cells.append(cell)
+                    if cell not in self.zero_around_enemy_base:
+                        good_cells.append(cell)
+
+                else:
+                    if cell not in self.visited_cells:
+                        good_cells.append(cell)
+
 
         if good_cells:
             logger.info(f"good cells: {good_cells}")
