@@ -22,7 +22,6 @@ class EasyMap():
         self.last_health = None
         self.last_last_cell = None
         self.last_cell = None
-        self.VAHSHI_ATTACK_MODE = False
 
         self.local_view = set()
         self.walls = set()
@@ -125,6 +124,13 @@ class EasyMap():
                     self.unknown_res.discard(easy_cell)
                     self.defence_cells.discard(easy_cell)
 
+        # if self.enemy_base:
+        #     zero_range = base_range + 1
+        #     for dx in range(-1 * zero_range, zero_range + 1):
+        #         dy = zero_range - abs(dx)
+        #         zero_cell = self.get_easy_neighbor(self.enemy_base, dx, dy)
+        #         self.zero_around_enemy_base.add(zero_cell)
+
     def am_i_near_enemy_base(self):
         my_pos = (self.game.ant.currentX, self.game.ant.currentY)
 
@@ -162,7 +168,7 @@ class EasyMap():
     def is_wall(self, cell):
         return cell in self.walls
 
-    def get_shortest_path(self, source_cell, dest_cell, only_seen=False):
+    def get_shortest_path(self, source_cell, dest_cell, only_seen=False, dont_die=True):
         queue = [source_cell]
         visited = []
         moves_list = [[]]
@@ -193,6 +199,9 @@ class EasyMap():
                 if cell not in visited and not self.is_wall(cell):
                     if only_seen and cell not in self.seen_cells:
                         continue
+                    if dont_die and cell in self.first_around_enemy_base:
+                        continue
+
                     visited.append(cell)
                     queue.append(cell)
                     moves_list.append(moves + [cdir])
@@ -272,36 +281,35 @@ class EasyMap():
         best_cell = None
         best_move = None
 
-        if self.enemy_base:
-            return self.enemy_base, self.get_shortest_path(source_cell, self.enemy_base)[0]
-        elif source_cell in self.second_around_enemy_base or source_cell in self.first_around_enemy_base:
-            return self.find_base(source_cell)
-        elif self.first_around_enemy_base:
-            if source_cell in self.zero_around_enemy_base:  # TODO: FIND BASE
-                if self.around_friend_sarbaz_count < 2:
-                    logger.info(f"wait in ZERO around base: {source_cell}")
-                    return source_cell, Direction.CENTER.value
-                logger.info(f"FIRST around base: {source_cell}")
-                return self.find_base(source_cell)
-            elif self.last_cell in self.first_around_enemy_base:
-                return self.find_base(source_cell)
-            else:
-                logger.info(f"GOING TO find enemy base: {source_cell}")
-                for att_cell in self.zero_around_enemy_base:
-                    moves = self.get_shortest_path(source_cell, att_cell)
-                    dist = len(moves)
-                    if dist > 0 and dist < min_dist:
-                        min_dist = dist
-                        best_cell = att_cell
-                        best_move = moves[0]
-                return best_cell, best_move
+        if source_cell in self.second_around_enemy_base or source_cell in self.first_around_enemy_base \
+                or (self.enemy_base and self.get_distance(source_cell, self.enemy_base) <= self.game.ant.attackDistance) \
+                or self.last_cell in self.first_around_enemy_base:
+            return self.attack_base(source_cell)
+        if source_cell in self.zero_around_enemy_base:
+            if self.around_friend_sarbaz_count < 3:
+                logger.info(f"wait in ZERO around base: {source_cell}")
+                return source_cell, Direction.CENTER.value
+            return self.attack_base(source_cell)
+        else:
+            logger.info(f"going to zero: {source_cell}")
+            for att_cell in self.zero_around_enemy_base:
+                moves = self.get_shortest_path(source_cell, att_cell)
+                dist = len(moves)
+                if dist > 0 and dist < min_dist:
+                    min_dist = dist
+                    best_cell = att_cell
+                    best_move = moves[0]
+            return best_cell, best_move
         return best_cell, best_move
 
-    def find_base(self, source_cell):
+    def attack_base(self, source_cell):
+        if self.enemy_base:
+            return self.enemy_base, self.get_shortest_path(source_cell, self.enemy_base, dont_die=False)[0]
+
         if source_cell in self.zero_around_enemy_base:
             for cell in self.first_around_enemy_base:
                 if self.get_distance(source_cell, cell) == 1:
-                    return cell, self.get_shortest_path(source_cell, cell)[0]
+                    return cell, self.get_shortest_path(source_cell, cell, dont_die=False)[0]
 
         dir_to_cell = {
             Direction.UP.value: self.get_easy_neighbor(source_cell, 0, -1),
@@ -325,9 +333,8 @@ class EasyMap():
                     if cell not in self.visited_cells:
                         good_cells.append(cell)
 
-
         if good_cells:
             logger.info(f"good cells: {good_cells}")
             random_good_cell = random.choice(good_cells)
-            return random_good_cell, self.get_shortest_path(source_cell, random_good_cell)[0]
+            return random_good_cell, self.get_shortest_path(source_cell, random_good_cell, dont_die=False)[0]
         return None, None

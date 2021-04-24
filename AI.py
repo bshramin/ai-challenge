@@ -88,15 +88,19 @@ class AI:
                        (AI.easy_map.enemy_base), 0)
             all_messages.append(message)
 
+        if AI.easy_map.last_cell in AI.easy_map.zero_around_enemy_base:
+            all_messages.append((MessageType.ZERO_ATTACK_BY_ENEMY_BASE,
+                                 (AI.easy_map.last_cell), 0))
+
         if AI.easy_map.last_cell in AI.easy_map.first_around_enemy_base:
             all_messages.append((MessageType.ZERO_ATTACK_BY_ENEMY_BASE,
-                       (AI.easy_map.last_last_cell), 0))
+                                 (AI.easy_map.last_last_cell), 0))
             all_messages.append((MessageType.FIRST_ATTACK_BY_ENEMY_BASE,
-                       (AI.easy_map.last_cell), 0))
-            
+                                 (AI.easy_map.last_cell), 0))
+
         if AI.easy_map.last_cell in AI.easy_map.second_around_enemy_base:
             all_messages.append((MessageType.SECOND_ATTACK_BY_ENEMY_BASE,
-                       (AI.easy_map.last_cell), 0))
+                                 (AI.easy_map.last_cell), 0))
 
         if len(all_messages) == 0:
             return None, 0
@@ -110,7 +114,7 @@ class AI:
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(
-                my_pos, my_base, True)[0]
+                my_pos, my_base, only_seen=True)[0]
             logger.info("base destination")
         else:
             res_pos, move = AI.easy_map.find_best_resource(my_pos)
@@ -132,7 +136,7 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        if AI.easy_map.enemy_base or not AI.defender:
+        if not AI.defender:
             att_pos, move = AI.easy_map.find_attack_pos(my_pos)
             logger.info(f"attack destination: {att_pos}")
             self.direction = move
@@ -161,9 +165,12 @@ class AI:
         logger.info(f"garss: {AI.easy_map.grass}")
         logger.info(f"unknown res: {AI.easy_map.unknown_res}")
         logger.info(f"defence cells: {AI.easy_map.defence_cells}")
-        logger.info(f"ZERO around base cells: {AI.easy_map.zero_around_enemy_base}")
-        logger.info(f"FIRST around base cells: {AI.easy_map.first_around_enemy_base}")
-        logger.info(f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
+        logger.info(
+            f"ZERO around base cells: {AI.easy_map.zero_around_enemy_base}")
+        logger.info(
+            f"FIRST around base cells: {AI.easy_map.first_around_enemy_base}")
+        logger.info(
+            f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
         logger.info(f"enemy base: {AI.easy_map.enemy_base}")
 
     def turn(self) -> (str, int, int):
@@ -184,7 +191,7 @@ class AI:
 
         AI.easy_map.last_last_cell = AI.easy_map.last_cell
         AI.easy_map.last_cell = (me.currentX, me.currentY)
-        
+
         logger.info(
             f"decide: { self.direction} - message: {self.message} - value: { self.value}")
         logger.info("")
