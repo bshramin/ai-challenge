@@ -22,7 +22,6 @@ class EasyMap():
         self.last_health = None
         self.last_last_cell = None
         self.last_cell = None
-        self.VAHSHI_ATTACK_MODE = False
 
         self.local_view = set()
         self.walls = set()
@@ -125,12 +124,12 @@ class EasyMap():
                     self.unknown_res.discard(easy_cell)
                     self.defence_cells.discard(easy_cell)
 
-        if self.enemy_base:
-            zero_range = base_range + 1
-            for dx in range(-1 * zero_range, zero_range + 1):
-                dy = zero_range - abs(dx)
-                zero_cell = self.get_easy_neighbor(self.enemy_base, dx, dy)
-                self.zero_around_enemy_base.add(zero_cell)
+        # if self.enemy_base:
+        #     zero_range = base_range + 1
+        #     for dx in range(-1 * zero_range, zero_range + 1):
+        #         dy = zero_range - abs(dx)
+        #         zero_cell = self.get_easy_neighbor(self.enemy_base, dx, dy)
+        #         self.zero_around_enemy_base.add(zero_cell)
 
     def am_i_near_enemy_base(self):
         my_pos = (self.game.ant.currentX, self.game.ant.currentY)
