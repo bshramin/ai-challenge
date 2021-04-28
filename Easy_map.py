@@ -184,6 +184,7 @@ class EasyMap():
         queue = [source_cell]
         visited = []
         moves_list = [[]]
+        swamps_count = 0
 
         visited.append(source_cell)
         while True:
@@ -196,6 +197,8 @@ class EasyMap():
             del moves_list[0]
             if cell == dest_cell:
                 if len(moves) > 0:
+                    for i in range(swamps_count):
+                        moves.append(Direction.CENTER.value)
                     return moves
                 else:
                     return [Direction.CENTER.value]
@@ -215,6 +218,8 @@ class EasyMap():
                         continue
                     if have_resource and not self.is_trap(cell):
                         continue
+                    if self.is_swamp(cell):
+                        swamps_count += 1
 
                     visited.append(cell)
                     queue.append(cell)
