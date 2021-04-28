@@ -114,7 +114,7 @@ class AI:
 
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
             self.direction = AI.easy_map.get_shortest_path(
-                my_pos, my_base, only_seen=True)[0]
+                my_pos, my_base, only_seen=True, have_resource=True)[0]
             logger.info("base destination")
         else:
             res_pos, move = AI.easy_map.find_best_resource(my_pos)

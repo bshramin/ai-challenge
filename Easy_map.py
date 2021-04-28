@@ -25,6 +25,8 @@ class EasyMap():
 
         self.local_view = set()
         self.walls = set()
+        self.traps = set()
+        self.swamps = set()
         self.bread = dict()
         self.grass = dict()
 
@@ -109,6 +111,10 @@ class EasyMap():
 
                 if cell.type == CellType.WALL.value:
                     self.walls.add(easy_cell)
+                elif cell.type == CellType.TRAP.value:
+                    self.traps.add(easy_cell)
+                elif cell.type == CellType.SWAMP.value:
+                    self.swamps.add(easy_cell)
                 elif cell.type == CellType.BASE.value and easy_cell != my_base:
                     self.enemy_base = easy_cell
                 elif cell.resource_value > 0:
@@ -168,7 +174,13 @@ class EasyMap():
     def is_wall(self, cell):
         return cell in self.walls
 
-    def get_shortest_path(self, source_cell, dest_cell, only_seen=False, dont_die=True):
+    def is_trap(self, cell):
+        return cell in self.traps
+
+    def is_swamp(self, cell):
+        return cell in self.swamps
+
+    def get_shortest_path(self, source_cell, dest_cell, only_seen=False, dont_die=True, have_resource=False):
         queue = [source_cell]
         visited = []
         moves_list = [[]]
@@ -200,6 +212,8 @@ class EasyMap():
                     if only_seen and cell not in self.seen_cells:
                         continue
                     if dont_die and cell in self.first_around_enemy_base:
+                        continue
+                    if have_resource and not self.is_trap(cell):
                         continue
 
                     visited.append(cell)
