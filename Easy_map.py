@@ -216,7 +216,7 @@ class EasyMap():
                         continue
                     if dont_die and cell in self.first_around_enemy_base:
                         continue
-                    if have_resource and not self.is_trap(cell):
+                    if have_resource and self.is_trap(cell):
                         continue
                     if self.is_swamp(cell):
                         swamps_count += 1
