@@ -163,8 +163,6 @@ class EasyMap():
                 self.zero_around_enemy_base.add(self.last_cell)
 
         self.last_health = self.game.ant.health
-        logger.info(
-            f"Last last pos: {self.last_last_cell}, last pos: {self.last_cell}")
 
     def get_easy_neighbor(self, source_cell, dx, dy):
         cell_x = (x(source_cell) + dx) % self.game.mapWidth
@@ -184,7 +182,6 @@ class EasyMap():
         queue = [source_cell]
         visited = []
         moves_list = [[]]
-        swamps_count = 0
 
         visited.append(source_cell)
         while True:
@@ -233,12 +230,17 @@ class EasyMap():
         min_dist = map_size
         best_cell = None
         best_move = None
+        my_base = (self.game.baseX, self.game.baseY)
         # TODO: decide res_type
         for res_cell, res_val in {**self.bread, **self.grass}.items():
             # TODO: check res_value too
             moves = self.get_shortest_path(source_cell, res_cell)
+            back_moves = self.get_shortest_path(res_cell, my_base, have_resource=True)
             dist = len(moves)
-            if dist > 0 and dist < min_dist:
+            if dist > 0 and dist < min_dist and len(back_moves) > 0:
+                logger.info("&&&&")
+                logger.info(back_moves)
+                logger.info("&&&&")
                 min_dist = dist
                 best_cell = res_cell
                 best_move = moves[0]
@@ -246,8 +248,9 @@ class EasyMap():
         if best_cell is None:
             for res_cell in self.unknown_res:
                 moves = self.get_shortest_path(source_cell, res_cell)
+                back_moves = self.get_shortest_path(res_cell, my_base, have_resource=True)
                 dist = len(moves)
-                if dist > 0 and dist < min_dist:
+                if dist > 0 and dist < min_dist and len(back_moves) > 0:
                     min_dist = dist
                     best_cell = res_cell
                     best_move = moves[0]
