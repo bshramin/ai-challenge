@@ -31,7 +31,6 @@ class AI:
         # Current Game State
         self.game: Game = None
         AI.turn_num += 1
-        self.unreachable_cells = set()
 
         # Answer
         self.message: str = None
