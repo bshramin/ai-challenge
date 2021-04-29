@@ -255,20 +255,25 @@ class EasyMap():
 
     def random_walk(self, source_cell):
         best_cell = None
+        best_moves = 99999
         best_move = None
         min_dist = 0
         while True:
             unvisited_min_dist = self.get_all_unvisited_cells_with_dist(
                 min_dist)
+            unvisited_min_dist += self.get_all_unvisited_cells_with_dist(
+                min_dist + 1)
             if unvisited_min_dist:
-                while best_move is None:
+                while unvisited_min_dist:
                     random_cell = random.choice(unvisited_min_dist)
+                    unvisited_min_dist.remove(random_cell)
                     moves = self.get_shortest_path(source_cell, random_cell)
-                    if len(moves) > 0:
-                        best_cell = random_cell
+                    if 0 < len(moves) < best_moves:
+                        best_moves = len(moves)
                         best_move = moves[0]
+                        best_cell = random_cell
                 if best_move:
-                    return random_cell, best_move
+                    return best_cell, best_move
             min_dist += 1
 
     def get_all_unvisited_cells_with_dist(self, dist):
@@ -277,7 +282,7 @@ class EasyMap():
         for x in range(-1 * dist, dist + 1):
             y = dist - abs(x)
             pos = self.get_easy_neighbor(my_pos, x, y)
-            if pos not in self.visited_cells and not self.is_wall(pos):
+            if pos not in self.seen_cells and not self.is_wall(pos):
                 unvisited_cells.append(pos)
         return unvisited_cells
 
