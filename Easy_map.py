@@ -197,8 +197,6 @@ class EasyMap():
             del moves_list[0]
             if cell == dest_cell:
                 if len(moves) > 0:
-                    for i in range(swamps_count):
-                        moves.append(Direction.CENTER.value)
                     return moves
                 else:
                     return [Direction.CENTER.value]
@@ -218,12 +216,17 @@ class EasyMap():
                         continue
                     if have_resource and self.is_trap(cell):
                         continue
+                    next_moves = moves + [cdir]
                     if self.is_swamp(cell):
-                        swamps_count += 1
-
+                        next_moves.extend([Direction.CENTER.value, Direction.CENTER.value, Direction.CENTER.value])
                     visited.append(cell)
-                    queue.append(cell)
-                    moves_list.append(moves + [cdir])
+                    index = len(moves_list)
+                    for move in moves_list:
+                        if len(next_moves) < len(move):
+                            index = moves_list.index(move)
+                            break
+                    queue.insert(index, cell)
+                    moves_list.insert(index, next_moves)
 
     def find_best_resource(self, source_cell):
         # TODO: maybe check outside of local too
