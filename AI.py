@@ -115,9 +115,7 @@ class AI:
         if resource.value > 0:  # TODO: age ja dasht bazam bardare
             moves = AI.easy_map.get_shortest_path(
                 my_pos, my_base, only_seen=True, have_resource=True)
-            logger.info(f'SALAAAM{len(moves)}')
             if len(moves) == 0:
-                logger.info("************************")
                 moves = AI.easy_map.get_shortest_path(
                     my_pos, my_base, only_seen=True)
             self.direction = moves[0]
@@ -182,16 +180,17 @@ class AI:
             f"SECOND around base cells: {AI.easy_map.second_around_enemy_base}")
         logger.info(f"enemy base: {AI.easy_map.enemy_base}")
         logger.info(
+            f"Last health: {AI.easy_map.last_health}, Now health: {me.health}")
+        logger.info(
             f"Last last pos: {AI.easy_map.last_last_cell}, last pos: {AI.easy_map.last_cell}")
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)
-        me = self.game.ant
-        ant_type = me.antType
-
         self.log_stuff()
 
         try:
+            me = self.game.ant
+            ant_type = me.antType
             if ant_type == AntType.KARGAR.value:
                 self.kargar_decide(me)
             else:
@@ -203,6 +202,8 @@ class AI:
         try:
             AI.easy_map.last_last_cell = AI.easy_map.last_cell
             AI.easy_map.last_cell = (me.currentX, me.currentY)
+            AI.easyMap.last_health = me.health
+
             logger.info(
                 f"decide: { self.direction} - message: {self.message} - value: { self.value}")
             logger.info("")
