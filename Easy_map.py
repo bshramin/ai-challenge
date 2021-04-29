@@ -36,6 +36,8 @@ class EasyMap():
         self.to_invalid_res = set()
         self.invalidated_res = set()
         self.seen_cells = set()
+        self.unreachable_cells = set()
+        self.new_unreachable_cells = set()
 
         self.enemy_base = None
         self.zero_around_enemy_base = set()
@@ -51,6 +53,7 @@ class EasyMap():
 
     def update(self, game: Game):
         self.game = game
+        self.new_unreachable_cells = set()
         self._update_from_messages()
         self._update_from_local_view()
         self.am_i_near_enemy_base()
@@ -75,6 +78,9 @@ class EasyMap():
                 MessageType.FIRST_ATTACK_BY_ENEMY_BASE, []))
             self.second_around_enemy_base.update(messages.get(
                 MessageType.SECOND_ATTACK_BY_ENEMY_BASE, []))
+            self.unreachable_cells.update(messages.get(
+                MessageType.UNREACHABLE_CELLS, []
+            ))
 
             self.invalidated_res.update(messages.get(
                 MessageType.INVALIDATE_RESOURCE, []))
@@ -231,10 +237,19 @@ class EasyMap():
         # TODO: decide res_type
         for res_cell, res_val in {**self.bread, **self.grass}.items():
             # TODO: check res_value too
+
+            if res_cell in self.unreachable_cells:
+                continue
+
             moves = self.get_shortest_path(source_cell, res_cell)
             back_moves = self.get_shortest_path(
                 res_cell, my_base, have_resource=True)
             dist = len(moves)
+
+            if len(back_moves) == 0 and res_cell not in self.unreachable_cells:
+                self.new_unreachable_cells.add(res_cell)
+                self.unreachable_cells.add(res_cell)
+
             if dist > 0 and dist < min_dist and len(back_moves) > 0:
                 min_dist = dist
                 best_cell = res_cell
@@ -242,10 +257,19 @@ class EasyMap():
 
         if best_cell is None:
             for res_cell in self.unknown_res:
+
+                if res_cell in self.unreachable_cells:
+                    continue
+
                 moves = self.get_shortest_path(source_cell, res_cell)
                 back_moves = self.get_shortest_path(
                     res_cell, my_base, have_resource=True)
                 dist = len(moves)
+
+                if len(back_moves) == 0 and res_cell not in self.unreachable_cells:
+                    self.new_unreachable_cells.add(res_cell)
+                    self.unreachable_cells.add(res_cell)
+
                 if dist > 0 and dist < min_dist and len(back_moves) > 0:
                     min_dist = dist
                     best_cell = res_cell

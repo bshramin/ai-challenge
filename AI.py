@@ -31,6 +31,7 @@ class AI:
         # Current Game State
         self.game: Game = None
         AI.turn_num += 1
+        self.unreachable_cells = set()
 
         # Answer
         self.message: str = None
@@ -83,6 +84,11 @@ class AI:
                 all_messages.append(
                     (MessageType.INVALIDATE_RESOURCE, invalid, 0))
 
+        for cell in self.easy_map.new_unreachable_cells:
+            all_messages.append(
+                (MessageType.UNREACHABLE_CELLS, cell, 0)
+            )
+
         if AI.easy_map.enemy_base:
             message = (MessageType.ENEMY_BASE_FOUND,
                        (AI.easy_map.enemy_base), 0)
@@ -112,10 +118,12 @@ class AI:
         my_base = (self.game.baseX, self.game.baseY)
         AI.easy_map.visited_cells.add(my_pos)
 
-        if resource.value > 0:  # TODO: age ja dasht bazam bardare
+        if resource.value > 0 and my_pos not in AI.easy_map.unreachable_cells:  # TODO: age ja dasht bazam bardare
             moves = AI.easy_map.get_shortest_path(
                 my_pos, my_base, only_seen=True, have_resource=True)
             if len(moves) == 0:
+                self.easy_map.new_unreachable_cells.add(my_pos)
+                self.easy_map.unreachable_cells.add(my_pos)
                 moves = AI.easy_map.get_shortest_path(
                     my_pos, my_base, only_seen=True)
             self.direction = moves[0]
@@ -183,32 +191,35 @@ class AI:
             f"Last health: {AI.easy_map.last_health}, Now health: {me.health}")
         logger.info(
             f"Last last pos: {AI.easy_map.last_last_cell}, last pos: {AI.easy_map.last_cell}")
+        logger.info(
+            f'Unreachable cells: {AI.easy_map.unreachable_cells}'
+        )
 
     def turn(self) -> (str, int, int):
         AI.easy_map.update(self.game)
         self.log_stuff()
+        me = self.game.ant
 
         try:
-            me = self.game.ant
             ant_type = me.antType
             if ant_type == AntType.KARGAR.value:
                 self.kargar_decide(me)
             else:
                 self.sarbaz_decide(me)
         except Exception as e:
-            logger.info("***EXCEPTION***")
+            logger.info("***EXCEPTION1***")
             logger.exception(e)
 
         try:
             AI.easy_map.last_last_cell = AI.easy_map.last_cell
             AI.easy_map.last_cell = (me.currentX, me.currentY)
-            AI.easyMap.last_health = me.health
+            AI.easy_map.last_health = me.health
 
             logger.info(
                 f"decide: { self.direction} - message: {self.message} - value: { self.value}")
             logger.info("")
             logger.info("")
         except Exception as e:
-            logger.info("***EXCEPTION***2")
+            logger.info("***EXCEPTION2***")
             logger.exception(e)
         return self.message, self.value, self.direction

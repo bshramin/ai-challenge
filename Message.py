@@ -13,6 +13,7 @@ class MessageType:  # also major_priority
     FIRST_ATTACK_BY_ENEMY_BASE = "4"
     SECOND_ATTACK_BY_ENEMY_BASE = "5"
     ENEMY_BASE_FOUND = "6"
+    UNREACHABLE_CELLS = "7"
 
 
 class EasyMessage:
@@ -29,6 +30,7 @@ class EasyMessage:
         MessageType.ZERO_ATTACK_BY_ENEMY_BASE: 5000,
         MessageType.FIRST_ATTACK_BY_ENEMY_BASE: 5000,
         MessageType.SECOND_ATTACK_BY_ENEMY_BASE: 5000,
+        MessageType.UNREACHABLE_CELLS: 500,
     }
 
     @staticmethod
